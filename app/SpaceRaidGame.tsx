@@ -119,7 +119,7 @@ export default function SpaceRaidGame() {
         {phase==="paused"&&<><h2>战斗暂停</h2><button className="start" onClick={()=>setPhase("playing")}><span>继续战斗</span><i>▶</i></button></>}
         {phase==="stageClear"&&<><div className="result-icon win">✓</div><h2>第 {wave} 关突破</h2><p>护盾已修复 25%<br/>下一关火力重置，重新收集强化</p><button className="start" onClick={nextStage}><span>进入第 {wave+1} 关</span><i>▶</i></button></>}
         {phase==="over"&&<><div className="result-icon">×</div><h2>战机坠毁</h2><p>本次得分 <b>{score}</b><br/>别让羊腿跑了，再来一次！</p><button className="start" onClick={start}><span>重新出击</span><i>↻</i></button></>}
-        {phase==="victory"&&<><div className="result-icon win">★</div><h2>星域已清空</h2><p>最终得分 <b>{score}</b><br/>“羊腿哪里跑”小队凯旋！</p><button className="start" onClick={start}><span>再战一局</span><i>↻</i></button></>}
+        {phase==="victory"&&<><div className="kicker">TOP SECRET · 通关彩蛋</div><img src="./victory-easter-egg.png" alt="羊腿哪里跑小队通关彩蛋：星际女指挥官" style={{width:190,height:238,objectFit:"cover",objectPosition:"center top",borderRadius:12,border:"2px solid #6ef4ff",boxShadow:"0 0 32px #6753ff99"}}/><h2 style={{fontSize:25,marginBottom:0}}>指挥官亲自迎接</h2><p style={{margin:"5px 0"}}>最终得分 <b>{score}</b><br/>羊腿哪里跑小队专属彩蛋</p><button className="start" style={{marginTop:10}} onClick={start}><span>再战一局</span><i>↻</i></button></>}
       </div>}
       {phase==="playing"&&<button className="pause" onClick={()=>setPhase("paused")} aria-label="暂停">Ⅱ</button>}
       <div className="signature">YANG TUI NA LI PAO · EXCLUSIVE</div>
