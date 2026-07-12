@@ -31,6 +31,8 @@ export default function SpaceRaidGame() {
   const [score, setScore] = useState(0);
   const [wave, setWave] = useState(1);
   const [hp, setHp] = useState(100);
+  const [powerLevel, setPowerLevel] = useState(0);
+  const [spreadLevel, setSpreadLevel] = useState(0);
   const game = useRef({
     ship: { x: W / 2, y: H - 102, w: 34, h: 42, hp: 100, maxHp: 100, cooldown: 0, invincible: 0, power: 0, spread: 0 } as Ship,
     shots: [] as Shot[], enemies: [] as Enemy[], particles: [] as Particle[], powerUps: [] as PowerUp[], stars: [] as { x: number; y: number; s: number; v: number }[],
@@ -44,7 +46,7 @@ export default function SpaceRaidGame() {
 
   const reset = useCallback(() => {
     game.current = { ship: { x: W / 2, y: H - 102, w: 34, h: 42, hp: 100, maxHp: 100, cooldown: 0, invincible: 0, power: 0, spread: 0 }, shots: [], enemies: [], particles: [], powerUps: [], stars: Array.from({length: 85}, () => ({x: Math.random()*W, y: Math.random()*H, s: Math.random()*1.8+.4, v: Math.random()*1.5+.5})), score: 0, wave: 1, time: 0, spawn: 20, kills: 0, bossSpawned: false, shake: 0 };
-    setScore(0); setWave(1); setHp(100);
+    setScore(0); setWave(1); setHp(100); setPowerLevel(0); setSpreadLevel(0);
   }, []);
 
   const start = useCallback(() => {
@@ -54,7 +56,7 @@ export default function SpaceRaidGame() {
 
   const nextStage = useCallback(() => {
     const g=game.current; g.wave++; g.kills=0; g.bossSpawned=false; g.enemies=[]; g.shots=[]; g.powerUps=[]; g.spawn=35; g.ship.hp=Math.min(100,g.ship.hp+25); g.ship.power=0; g.ship.spread=0; g.ship.x=W/2; g.ship.y=H-102; g.ship.invincible=100;
-    setWave(g.wave); setHp(g.ship.hp); setPhase("playing"); tone(420,.16,"sine",.06); setTimeout(()=>tone(620,.24,"sine",.06),120);
+    setWave(g.wave); setHp(g.ship.hp); setPowerLevel(0); setSpreadLevel(0); setPhase("playing"); tone(420,.16,"sine",.06); setTimeout(()=>tone(620,.24,"sine",.06),120);
   }, [tone]);
 
   useEffect(() => { soundRef.current = sound; }, [sound]);
@@ -80,7 +82,7 @@ export default function SpaceRaidGame() {
       for(const st of g.stars){if(active)st.y+=st.v*(1+g.wave*.08);if(st.y>H){st.y=0;st.x=Math.random()*W;}ctx.globalAlpha=.35+st.s*.28;ctx.fillStyle=st.s>1.4?"#86eaff":"#fff";ctx.fillRect(st.x,st.y,st.s,st.s*2.7);}ctx.globalAlpha=1;
       if(active){
         g.time++; const s=g.ship;s.cooldown--;s.invincible=Math.max(0,s.invincible-1);
-        if(s.cooldown<=0){const damage=10+s.power*5;g.shots.push({x:s.x-7,y:s.y-20,vx:0,vy:-9,r:3+s.power*.35,damage},{x:s.x+7,y:s.y-20,vx:0,vy:-9,r:3+s.power*.35,damage});if(s.spread>=1)g.shots.push({x:s.x-11,y:s.y-14,vx:-1.1,vy:-8.7,r:3,damage},{x:s.x+11,y:s.y-14,vx:1.1,vy:-8.7,r:3,damage});if(s.spread>=2)g.shots.push({x:s.x-14,y:s.y-10,vx:-2.1,vy:-8.1,r:3,damage},{x:s.x+14,y:s.y-10,vx:2.1,vy:-8.1,r:3,damage});if(s.spread>=3)g.shots.push({x:s.x,y:s.y-25,vx:0,vy:-10.8,r:4,damage:damage+5},{x:s.x-16,y:s.y-7,vx:-3,vy:-7.5,r:3,damage},{x:s.x+16,y:s.y-7,vx:3,vy:-7.5,r:3,damage});s.cooldown=Math.max(5,8-s.power*.75);if(g.time%16===0)tone(680+s.power*45,.035,"square",.012);}
+        if(s.cooldown<=0){const damage=10+s.power*5;g.shots.push({x:s.x,y:s.y-24,vx:0,vy:-9.5,r:3+s.power*.35,damage});if(s.spread>=1)g.shots.push({x:s.x-9,y:s.y-17,vx:-1.05,vy:-8.7,r:3,damage},{x:s.x+9,y:s.y-17,vx:1.05,vy:-8.7,r:3,damage});if(s.spread>=2)g.shots.push({x:s.x-13,y:s.y-11,vx:-2.05,vy:-8.1,r:3,damage},{x:s.x+13,y:s.y-11,vx:2.05,vy:-8.1,r:3,damage});if(s.spread>=3)g.shots.push({x:s.x-16,y:s.y-7,vx:-3,vy:-7.5,r:3,damage},{x:s.x+16,y:s.y-7,vx:3,vy:-7.5,r:3,damage});s.cooldown=Math.max(5,8-s.power*.75);if(g.time%16===0)tone(680+s.power*45,.035,"square",.012);}
         const threshold = g.wave===1?14:18+g.wave*4;
         if(g.kills>=threshold && !g.bossSpawned){const n=g.wave-1,bossHp=g.wave===1?450:590+n*350+n*n*70;g.bossSpawned=true;g.enemies.push({x:W/2,y:-70,vx:0,vy:.72,r:40+g.wave*1.8,hp:bossHp,maxHp:bossHp,kind:3,cooldown:48,boss:true,bossType:g.wave});tone(70+g.wave*10,.6,"sawtooth",.09);}
         if(!g.bossSpawned && --g.spawn<=0){const roll=Math.random(),fastRate=g.wave===1?0:.12+g.wave*.045,heavyRate=g.wave===1?.12:.18+g.wave*.055,kind=roll<fastRate?2:roll<fastRate+heavyRate?1:0,r=kind===2?17:kind===1?22:15,hp=(kind===2?44:kind===1?82:30)+g.wave*(kind===1?15:10);g.enemies.push({x:30+Math.random()*(W-60),y:-30,vx:(Math.random()-.5)*(kind===2?2.6+g.wave*.08:1+g.wave*.12),vy:(kind===2?2.1:.85+Math.random()*.45)+g.wave*.11,r,hp,maxHp:hp,kind,cooldown:(kind===1?52:84)+Math.random()*50-g.wave*3});g.spawn=g.wave===1?50:Math.max(15,46-g.wave*4);}
@@ -89,7 +91,7 @@ export default function SpaceRaidGame() {
           if(e.y>H+40){e.hp=0;if(!e.boss){s.hp-=12;setHp(Math.max(0,s.hp));}}
         }
         for(const sh of g.shots){if(sh.enemy){if(s.invincible<=0&&hit(sh,s,19)){sh.y=H+99;s.hp-=12;s.invincible=50;g.shake=8;burst(s.x,s.y,"#ff4f9b",16);tone(120,.16,"sawtooth",.07);setHp(Math.max(0,s.hp));}}else for(const e of g.enemies){if(e.hp>0&&(!e.boss||e.y>=70)&&hit(sh,e,e.r+5)){e.hp-=sh.damage||10;sh.y=-99;burst(sh.x,sh.y,"#5ffaff",4);if(e.hp<=0){burst(e.x,e.y,e.boss?"#c85cff":"#ff7a3d",e.boss?55:18);g.shake=e.boss?18:5;g.score+=e.boss?1800*g.wave:e.kind?250:120;g.kills++;setScore(g.score);tone(e.boss?70:180,e.boss?.7:.12,"sawtooth",e.boss?.12:.045);if(!e.boss&&Math.random()<.2){const roll=Math.random(),kind=roll<.3?"bomb":roll<.65?"spread":"power";g.powerUps.push({x:e.x,y:e.y,vy:1.5,life:600,kind});}if(e.boss){setPhase(g.wave>=8?"victory":"stageClear");}}}}}
-        for(const p of g.powerUps){p.y+=p.vy;p.life--;if(hit(p,s,25)){p.life=0;if(p.kind==="bomb"){g.shake=16;g.shots=g.shots.filter(q=>!q.enemy);let bonus=0;for(const e of g.enemies){if(!e.boss&&e.hp>0){e.hp=0;g.kills++;bonus+=180;burst(e.x,e.y,"#62f6ff",16);}else if(e.boss)e.hp=Math.max(1,e.hp-(60+g.wave*12));}g.score+=bonus;setScore(g.score);tone(90,.45,"sawtooth",.11);burst(s.x,s.y,"#fff36a",40);}else if(p.kind==="spread"){s.spread=Math.min(3,s.spread+1);tone(520,.22,"sine",.07);burst(s.x,s.y,"#4eeaff",28);}else{s.power=Math.min(3,s.power+1);tone(760,.22,"square",.055);burst(s.x,s.y,"#ff526f",28);}}}
+        for(const p of g.powerUps){p.y+=p.vy;p.life--;if(hit(p,s,25)){p.life=0;if(p.kind==="bomb"){g.shake=16;g.shots=g.shots.filter(q=>!q.enemy);let bonus=0;for(const e of g.enemies){if(!e.boss&&e.hp>0){e.hp=0;g.kills++;bonus+=180;burst(e.x,e.y,"#62f6ff",16);}else if(e.boss)e.hp=Math.max(1,e.hp-(60+g.wave*12));}g.score+=bonus;setScore(g.score);tone(90,.45,"sawtooth",.11);burst(s.x,s.y,"#fff36a",40);}else if(p.kind==="spread"){s.spread=Math.min(3,s.spread+1);setSpreadLevel(s.spread);tone(520,.22,"sine",.07);burst(s.x,s.y,"#4eeaff",28);}else{s.power=Math.min(3,s.power+1);setPowerLevel(s.power);tone(760,.22,"square",.055);burst(s.x,s.y,"#ff526f",28);}}}
         g.shots=g.shots.filter(q=>q.y>-120&&q.y<H+120&&q.x>-30&&q.x<W+30);g.enemies=g.enemies.filter(e=>e.hp>0&&e.y<H+80);
         for(const p of g.particles){p.x+=p.vx;p.y+=p.vy;p.vx*=.97;p.vy*=.97;p.life-=.025;}
         g.powerUps=g.powerUps.filter(p=>p.life>0&&p.y<H+30);g.particles=g.particles.filter(p=>p.life>0);if(s.hp<=0)setPhase("over");
@@ -109,7 +111,7 @@ export default function SpaceRaidGame() {
     <div className="ambient ambient-a"/><div className="ambient ambient-b"/>
     <section className="game-frame" aria-label="羊腿哪里跑专用雷电游戏">
       <div className="brand"><span className="brand-mark">LT</span><div><b>星际雷电</b><small>羊腿哪里跑专用</small></div><strong style={{marginLeft:"auto",fontSize:8,color:"#ffe36b",border:"1px solid #ffe36b66",padding:"5px 7px",letterSpacing:1}}>V3 · 八关强化版</strong></div>
-      <div className="hud"><div><small>SCORE</small><b>{score.toString().padStart(6,"0")}</b></div><div className="wave">关卡 <b>{wave}</b>/8</div><div className="hp"><small>护盾 {hp}%</small><i><em style={{width:`${hp}%`}}/></i></div></div>
+      <div className="hud"><div><small>SCORE</small><b>{score.toString().padStart(6,"0")}</b><small>散 {spreadLevel} · 强 {powerLevel}</small></div><div className="wave">关卡 <b>{wave}</b>/8</div><div className="hp"><small>护盾 {hp}%</small><i><em style={{width:`${hp}%`}}/></i></div></div>
       <canvas ref={canvasRef} className="game-canvas" aria-label="游戏区域：拖动战机自动射击" />
       <button className="sound" onClick={()=>setSound(v=>!v)} aria-label={sound?"关闭音效":"打开音效"}>{sound?"◖))":"◖×"}</button>
       {phase!=="playing"&&<div className="overlay">
